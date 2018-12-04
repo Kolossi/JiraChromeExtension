@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
-    "name": "Kolossi's Jira Chrome Extension",
-    "version": "0.2",
+    "name": "Kolossi's Jira On Fire Chrome Extension",
+    "version": "0.3",
     "icons" : {
         "16": "jira16.png",
         "32": "jira32.png",
