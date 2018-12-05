@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jira On Fire Options</title>
+    <style>
+        label {
+            color:#2684FF;
+        }
+        div.mydiv {
+            margin: 10px;
+        }
+        #status {
+            color:darkorange;
+        }
+        #save {
+            background-color:#2684FF;
+            color:#ED7D1D;
+        }
+    </style>
+
+</head>
+<body>
+
+    <div class="mydiv">
+        <label>
+          <input type="checkbox" id="comments">
+          Widen comments area
+        </label>
+    </div>
+
+    <div class="mydiv">
+        <label>
+          <input type="checkbox" id="parentSummary">
+          Show subtask parent summary
+        </label>
+    </div>
+
+    <div class="mydiv">
+        <label>
+          <input type="checkbox" id="worklog">
+          Retrieve and display worklog
+        </label>
+    </div>
+
+    <div class="mydiv">
+        <label>
+          <input type="checkbox" id="parentLink">
+          Make subtask parent clickable on boards
+        </label>
+    </div>
+
+    <div class="mydiv">
+        <div id="status" class="mydiv">&nbsp;</div>
+        <button id="save">Save</button>
+    </div>
+
+    <script src="options.min.js"></script>
+</body>
+</html>

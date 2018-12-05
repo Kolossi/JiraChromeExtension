@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Kolossi's Jira On Fire Chrome Extension",
-    "version": "0.3",
+    "version": "0.4",
     "icons" : {
         "16": "jira16.png",
         "32": "jira32.png",
@@ -12,12 +12,19 @@
     "content_scripts": [
         {
             "matches": [
-                "https://dnatatravel.atlassian.net/*"
+                "https://*.atlassian.net/*"
             ],
             "js": [
                 "jquery-3.1.0.min.js",
-                "boostit.js"
+                "fireit.min.js"
             ]
         }
-    ]
+    ],
+    "permissions": [
+          "storage"
+    ],
+    "options_ui": {
+        "page": "options.html",
+        "open_in_tab": false
+    }
 }
