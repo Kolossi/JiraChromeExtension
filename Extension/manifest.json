@@ -1,12 +1,15 @@
 {
     "manifest_version": 2,
-    "name": "Kolossi's Jira On Fire Chrome Extension",
-    "version": "0.4",
+    "name": "Jira On Fire by Kolossi",
+    "short_name": "Jira On Fire",
+    "description" :"For cloud-hosted jira (https://*.atlassian.net) this will do some enhancements to the jira display. See options.",
+    "version": "0.5",
     "icons" : {
         "16": "jira16.png",
         "32": "jira32.png",
         "48": "jira48.png",
         "64": "jira64.png",
+        "96": "jira96.png",
         "128": "jira128.png"
     },
     "content_scripts": [
