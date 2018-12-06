@@ -1,2 +1,4 @@
 *.min.js
 Extension.zip
+build/
+/build.zip

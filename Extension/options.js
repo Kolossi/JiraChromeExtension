@@ -4,11 +4,13 @@ function save_options() {
   var parentSummary = document.getElementById('parentSummary').checked;
   var worklog = document.getElementById('worklog').checked;
   var parentLink = document.getElementById('parentLink').checked;
+  var showFire = document.getElementById('showFire').checked;
   chrome.storage.sync.set({
       comments: comments,
       parentSummary: parentSummary,
       worklog: worklog,
       parentLink: parentLink,
+      showFire: showFire
   }, function() {
     // Update status to let user know options were saved.
     var status = document.getElementById('status');
@@ -27,12 +29,14 @@ function restore_options() {
       comments: true,
       parentSummary: true,
       worklog: true,
-      parentLink: true
+      parentLink: true,
+      showFire: true
   }, function(items) {
     document.getElementById('comments').checked = items.comments;
     document.getElementById('parentSummary').checked = items.parentSummary;
     document.getElementById('worklog').checked = items.worklog;
     document.getElementById('parentLink').checked = items.parentLink;
+    document.getElementById('showFire').checked = items.showFire;
   });
 }
 
