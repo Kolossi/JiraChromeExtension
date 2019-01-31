@@ -1,11 +1,14 @@
+debugger; // #DEBUGONLY
 // bomb out if we aren't on a jira page
 $("body#jira").each(function() {
     chrome.storage.sync.get({
-      comments: true,
-      parentSummary: true,
-      worklog: true,
-      parentLink: true,
-      showFire:true
+        comments: true,
+        parentSummary: true,
+        worklog: true,
+        parentLink: true,
+        readiness: true,
+        showFire:true,
+        menu:false
     }, function(config) {
 
         //boost comment width
@@ -49,10 +52,9 @@ $("body#jira").each(function() {
                 $(".issuerow").each(function() {
                     var row = $(this);
                     var issId = $(this).attr("rel");
-                    jQuery.ajax( {
-                        url : "/rest/api/2/issue/"+issId,
-                        success : function(result) {
-                            result.fields.worklog.worklogs.forEach(function(wl) {
+                    GetIssue(issId,
+                        function(issue) {
+                            issue.fields.worklog.worklogs.forEach(function(wl) {
                                 var startParts = (new Date(wl.started)).toDateString().split(" ");
                                 var newRow = "<tr class='jofjofwl'><td></td><td></td><td colspan=100>&nbsp;&nbsp;&nbsp;&nbsp;<span "
                                     + (config.showFire ? "style='border-bottom:1px dotted darkorange;'" : "")
@@ -63,23 +65,114 @@ $("body#jira").each(function() {
                                     + "</span></td></tr>";
                                 row.after(newRow);
                             });
-                        }
-                    });
+                        });
                 });
             }
         }
 
-        if (config.parentLink || config.comments)
+        var Readiness = {
+            UNKNOWN : 0,
+            STOP : 1,
+            WAIT : 2,
+            GO : 3,
+            DONE : 4,
+        };
+
+        function AddReadiness(targetElement, readiness) {
+            targetElement.after("<div class='jofjofrd jofjofrd"+readiness
+                + (config.showFire ? ' jofjofshowfire' : '')
+                + "'>&nbsp;</div>");
+        }
+
+        function ComputeReadiness(issId, targetElement) {
+            GetIssue(issId,
+                        function(issue) {
+                            var readiness = Readiness.UNKNOWN;
+                            var isSubTask = issue.fields.issuetype.subtask;
+                            if (issue.fields.status.statusCategory.name == "Done") {
+                                readiness = Readiness.DONE;
+                                AddReadiness(targetElement, readiness);
+                            } else if (!isSubTask || issue.fields.status.statusCategory.name == "In Progress") {
+                                readiness = Readiness.GO;
+                                AddReadiness(targetElement, readiness);
+                            } else {
+                                var parentIssId = issue.fields.parent.id;
+                                GetIssue(parentIssId,
+                                    function(issue) {
+                                        if (issue.fields.status.statusCategory.name == "Done")
+                                        {
+                                            readiness = Readiness.STOP;
+                                        } else {
+                                            var predecessorStatus = "Done";
+                                            issue.fields.subtasks.every(function(st) {
+                                                if (st.id==issId) {
+                                                    readiness = (predecessorStatus=="Done") ? Readiness.GO : Readiness.WAIT;
+                                                    return false;
+                                                }
+                                                predecessorStatus = st.fields.status.statusCategory.name;
+                                                return true;
+                                            });
+                                        }
+                                        AddReadiness(targetElement, readiness);
+                                    });
+                            }
+                        });
+        }
+
+        if (config.readiness) {
+            var jofrd=$(".jofjofrd");
+            if (jofrd.length>0) {
+                jofrd.remove();
+            }
+            else {
+                $(".issuerow").each(function() {
+                    var row = $(this);
+                    var targetElement = $("td.issuetype > a:last", row);
+                    var issId = $(this).attr("rel");
+                    ComputeReadiness(issId, targetElement);
+                });
+            }
+        }
+
+
+        if (config.parentLink || config.comments || config.menu)
         {
             var increasedTextArea=false;
             function doRepeatChecks() {
+                // show left hand sidebar menu icon
+                if (config.menu) {
+                    var imgsrc = chrome.runtime.getURL("jira32.png");
+                    var navelement = $("#navigation-app span:first > div > div:first");
+                    if ($("div.jofjofmenu", navelement.parent()).length==0) {
+                        navelement.after("<div class='jofjofmenu'>"
+                                + "<img src='"+imgsrc+"'>"
+                                + "</div>");
+                    }
+                }
+
+                if (config.readiness) {
+                    var jofrd=$(".jofjofrd");
+                    if (jofrd.length==0) {
+                        $(".ghx-issue").each(function() {
+                            var card = $(this);
+                            var targetElement = $("section.ghx-stat-fields > div.ghx-stat-1 > span.ghx-field-icon:last", card);
+                            var issId = $(this).attr("data-issue-id");
+                            ComputeReadiness(issId, targetElement);
+                        });
+                    }
+                }
+                    
+
                 // Make board parent jira numbers on cards into links
                 if (config.parentLink) {
                     $("span.ghx-key").each(function() {
-                        var jira = $(this).text();
-                        $(this).html('<a href="/browse/' + jira + '" aria-label="' + jira + '" data-tooltip="' + jira + '" tabindex="-1" class="ghx-key" original-title '
-                            + (config.showFire ? 'style="border-bottom:1px dotted darkorange; "' : '')
-                            + '>' + jira + '</a>');    
+                        if ($("a",this).length==0)
+                        {
+                            var jira = $(this).text();
+                            $(this).html('<a href="/browse/' + jira + '" aria-label="' + jira + '" data-tooltip="' + jira + '" tabindex="-1" class="ghx-key" original-title '
+                                + (config.showFire ? 'style="border-bottom:1px dotted darkorange; "' : '')
+                                + '>' + jira + '</a>');    
+                        }
                     });
                 }
                 //

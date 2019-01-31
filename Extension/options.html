@@ -6,7 +6,7 @@
         label {
             color:#2684FF;
         }
-        div.mydiv {
+        div.jofjofDiv {
             margin: 10px;
         }
         #status {
@@ -15,53 +15,73 @@
         #save {
             background-color:#2684FF;
             color:#ED7D1D;
+            border : 0;
         }
+        div.jofjofOptDiv {
+            width:500px;
+        }
+
     </style>
 
 </head>
 <body>
+    <div class="jofjofOptDiv">
+        <div class="jofjofDiv">
+            <label>
+              <input type="checkbox" id="comments">
+              <b>Comments</b> - Widen comments areas
+            </label>
+        </div>
 
-    <div class="mydiv">
-        <label>
-          <input type="checkbox" id="comments">
-          Widen comments area
-        </label>
+        <div class="jofjofDiv">
+            <label>
+              <input type="checkbox" id="parentSummary">
+              <b>Parent Summary</b> - Show subtask parent summary rather than Jira ticket number
+            </label>
+        </div>
+
+        <div class="jofjofDiv">
+            <label>
+              <input type="checkbox" id="worklog">
+              <b>Worklog</b> - Retrieve and display worklog
+            </label>
+        </div>
+
+        <div class="jofjofDiv">
+            <label>
+              <input type="checkbox" id="parentLink">
+              <b>Parent Links</b> - Make subtask parent clickable on boards
+            </label>
+        </div>
+
+        <div class="jofjofDiv">
+            <label>
+              <input type="checkbox" id="readiness">
+              <b>Readiness</b> - Show whether a subtask is ready to be started
+            </label>
+        </div>
+
+        <div class="jofjofDiv">
+            <label>
+              <input type="checkbox" id="showFire">
+              <b>Show Fire</b> - Show page changes by extension using thin dotted orange lines
+            </label>
+        </div>
+
+<!-- #DEBUGONLY -->        <div class="jofjofDiv">
+<!-- #DEBUGONLY -->            <label>
+<!-- #DEBUGONLY -->              <input type="checkbox" id="menu">
+<!-- #DEBUGONLY -->              <b>Menu</b> - Show a "Jira On Fire" menu icon in the left hand jira sidebar
+<!-- #DEBUGONLY -->            </label>
+<!-- #DEBUGONLY -->        </div>
+
+
+        <div class="jofjofDiv">
+            <div id="status" class="jofjofDiv">&nbsp;</div>
+            <button id="save">Save</button>
+        </div>
     </div>
 
-    <div class="mydiv">
-        <label>
-          <input type="checkbox" id="parentSummary">
-          Show subtask parent summary
-        </label>
-    </div>
-
-    <div class="mydiv">
-        <label>
-          <input type="checkbox" id="worklog">
-          Retrieve and display worklog
-        </label>
-    </div>
-
-    <div class="mydiv">
-        <label>
-          <input type="checkbox" id="parentLink">
-          Make subtask parent clickable on boards
-        </label>
-    </div>
-
-        <div class="mydiv">
-        <label>
-          <input type="checkbox" id="showFire">
-          Show page changes made using thin dotted orange lines
-        </label>
-    </div>
-
-
-    <div class="mydiv">
-        <div id="status" class="mydiv">&nbsp;</div>
-        <button id="save">Save</button>
-    </div>
-
-    <script src="options.min.js"></script>
+    <script src="options.js"></script>
 </body>
 </html>

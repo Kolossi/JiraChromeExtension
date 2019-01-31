@@ -1,0 +1,58 @@
+.jofjofmenu {
+    width:32px;
+    height:32px;
+    border:2px dotted darkorange;
+    border-radius:50%;
+    background-color:white;
+}
+
+.jofjofmenu:hover {
+    border:3px dotted white;
+    background-color: darkorange;
+    cursor: pointer;
+}
+
+.jofjofrd {
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    margin-top: 2px;
+}
+
+.ghx-row > .jofjofrd {
+    display: inline-block;
+    margin-right:2px;
+    margin-top:0px;
+    vertical-align: middle;
+}
+
+.jofjofrd.jofjofrd0
+{
+    background-color:lightgray;
+}
+
+.jofjofrd.jofjofrd1
+{
+    background-color:red;
+}
+
+.jofjofrd.jofjofrd2
+{
+    background-color:orange;
+}
+
+.jofjofrd.jofjofrd3
+{
+    background-color:green;
+}
+
+.jofjofrd.jofjofrd4
+{
+    background-color:#abf5d1;
+}
+
+.jofjofrd.jofjofshowfire
+{
+    border:1px dotted darkorange;
+}
+
