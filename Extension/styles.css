@@ -19,6 +19,14 @@
     margin-top: 2px;
 }
 
+.jofjofwlshow {
+    cursor:pointer;
+}
+
+.jofjofhidden {
+    display: none;
+}
+
 .ghx-row > .jofjofrd {
     display: inline-block;
     margin-right:2px;

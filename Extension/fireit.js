@@ -5,6 +5,7 @@ $("body#jira").each(function() {
         comments: true,
         parentSummary: true,
         worklog: true,
+        maxWorkLog : 3,
         parentLink: true,
         readiness: true,
         showFire:true,
@@ -54,9 +55,17 @@ $("body#jira").each(function() {
                     var issId = $(this).attr("rel");
                     GetIssue(issId,
                         function(issue) {
+                            if (issue.fields.worklog.worklogs.length==0) return;
+
+                            var wlNum = 0;
+                            var hideRows = false;
                             issue.fields.worklog.worklogs.forEach(function(wl) {
+                                if (config.maxWorkLog>0 && wlNum==config.maxWorkLog) {
+                                    hideRows = true;
+                                }
                                 var startParts = (new Date(wl.started)).toDateString().split(" ");
-                                var newRow = "<tr class='jofjofwl'><td></td><td></td><td colspan=100>&nbsp;&nbsp;&nbsp;&nbsp;<span "
+                                var newRow = "<tr rel='"+issId+"' class='jofjofwl"
+                                    + "'><td></td><td></td><td colspan=100>&nbsp;&nbsp;&nbsp;&nbsp;<span "
                                     + (config.showFire ? "style='border-bottom:1px dotted darkorange;'" : "")
                                     + ">" + wl.author.displayName + ": <b>"
                                     + wl.timeSpent + "</b> on <b>"
@@ -64,7 +73,21 @@ $("body#jira").each(function() {
                                     + "</b>" + (wl.comment ? " : " + wl.comment : "")
                                     + "</span></td></tr>";
                                 row.after(newRow);
+                                wlNum+=1;
                             });
+                            if (hideRows) {
+                                var showRow = $("<tr rel='"+issId+"' class='jofjofwl'><td></td><td></td><td colspan=100>&nbsp;&nbsp;&nbsp;&nbsp;<span class='jofjofwlshow' "
+                                        + (config.showFire ? "style='border-bottom:1px dotted darkorange;'" : "")
+                                        + ">&nbsp;&nbsp;&nbsp;&nbsp;... click to show remaining worklog ..."
+                                        + "</span></td></tr>")
+                                            .click(function (e) {
+                                                $(".jofjofhidden[rel="+issId+"]").removeClass("jofjofhidden");
+                                                $(this).addClass("jofjofhidden");
+                                            });
+                                
+                                $(".jofjofwl[rel="+issId+"]").eq(config.maxWorkLog-1).after(showRow);
+                                $(".jofjofwl[rel="+issId+"]:gt("+(config.maxWorkLog)+")").addClass("jofjofhidden");
+                            }
                         });
                 });
             }
