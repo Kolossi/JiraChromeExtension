@@ -109,10 +109,12 @@ $("body#jira").each(function() {
             DONE : 4,
         };
 
-        function AddReadiness(targetElement, readiness) {
+        function AddReadiness(targetElement, readiness, readinessText) {
             targetElement.after("<div class='jofjofrd jofjofrd"+readiness
                 + (config.showFire ? ' jofjofshowfire' : '')
-                + "'>&nbsp;</div>");
+                + "'"
+                + (readinessText != null ? " title='" + readinessText + "'" : "")
+                + ">&nbsp;</div>");
         }
 
         function ComputeReadiness(issId, targetElement) {
@@ -125,13 +127,16 @@ $("body#jira").each(function() {
                 function(issue, data) {
                     console.debug("jofjof : rd callback " + issId + " with "+JSON.stringify(data)+ " targetElement:"+data.targetElement[0].outerHTML); // #DEBUGONLY
                     var readiness = Readiness.UNKNOWN;
+                    var readinessText = null;
                     var isSubTask = issue.fields.issuetype.subtask;
                     if (issue.fields.status.statusCategory.name == "Done") {
                         readiness = Readiness.DONE;
-                        AddReadiness(data.targetElement, readiness);
+                        readinessText = "Done";
+                        AddReadiness(data.targetElement, readiness, readinessText);
                     } else if (!isSubTask && issue.fields.status.statusCategory.name == "In Progress") {
                         readiness = Readiness.GO;
-                        AddReadiness(data.targetElement, readiness);
+                        readinessText = "In Progress";
+                        AddReadiness(data.targetElement, readiness, readinessText);
                     } else {
                         var parentIssId = issue.fields.parent.id;
                         JofJofQueueIssueAction(parentIssId,
@@ -146,18 +151,25 @@ $("body#jira").each(function() {
                                 if (issue.fields.status.statusCategory.name == "Done")
                                 {
                                     readiness = Readiness.STOP;
+                                    readinessText = "Parent is Done";
                                 } else {
                                     var predecessorStatus = "Done";
                                     issue.fields.subtasks.every(function(st) {
                                         if (st.id==parentData.issId) {
-                                            readiness = (predecessorStatus=="Done") ? Readiness.GO : Readiness.WAIT;
+                                            if (predecessorStatus=="Done") {
+                                                readiness = Readiness.GO;
+                                                readinessText = "Previous subtask is Done";
+                                            } else {
+                                                readiness = Readiness.WAIT;
+                                                readinessText = "Previous subtask is not yet Done";
+                                            }
                                             return false;
                                         }
                                         predecessorStatus = st.fields.status.statusCategory.name;
                                         return true;
                                     });
                                 }
-                                AddReadiness(parentData.targetElement, readiness);
+                                AddReadiness(parentData.targetElement, readiness, readinessText);
                             });
                     }
                 });
