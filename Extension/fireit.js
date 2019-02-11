@@ -11,6 +11,7 @@ $("body#jira").each(function() {
         showFire:true,
         menu:false
     }, function(config) {
+        var uniqueId = 10001;
 
         //boost comment width
         if (config.comments) {
@@ -53,8 +54,15 @@ $("body#jira").each(function() {
                 $(".issuerow").each(function() {
                     var row = $(this);
                     var issId = $(this).attr("rel");
-                    GetIssue(issId,
-                        function(issue) {
+                    JofJofQueueIssueAction(issId,
+                        {
+                            targetElement:row,
+                            uniqueId:uniqueId++,
+                            issId:issId
+                        },
+                        function(issue, data) {
+                            console.debug("jofjof : wl callback " + data.issId +  " with "+JSON.stringify(data)+ " targetElement:"+data.targetElement[0].outerHTML); // #DEBUGONLY
+
                             if (issue.fields.worklog.worklogs.length==0) return;
 
                             var wlNum = 0;
@@ -64,7 +72,7 @@ $("body#jira").each(function() {
                                     hideRows = true;
                                 }
                                 var startParts = (new Date(wl.started)).toDateString().split(" ");
-                                var newRow = "<tr rel='"+issId+"' class='jofjofwl"
+                                var newRow = "<tr rel='"+data.issId+"' class='jofjofwl"
                                     + "'><td></td><td></td><td colspan=100>&nbsp;&nbsp;&nbsp;&nbsp;<span "
                                     + (config.showFire ? "style='border-bottom:1px dotted darkorange;'" : "")
                                     + ">" + wl.author.displayName + ": <b>"
@@ -72,21 +80,21 @@ $("body#jira").each(function() {
                                     + startParts[0] + " " + startParts[2] + "-" + startParts[1] + "-" + startParts[3]
                                     + "</b>" + (wl.comment ? " : " + wl.comment : "")
                                     + "</span></td></tr>";
-                                row.after(newRow);
+                                data.targetElement.after(newRow);
                                 wlNum+=1;
                             });
                             if (hideRows) {
-                                var showRow = $("<tr rel='"+issId+"' class='jofjofwl'><td></td><td></td><td colspan=100>&nbsp;&nbsp;&nbsp;&nbsp;<span class='jofjofwlshow' "
+                                var showRow = $("<tr rel='"+data.issId+"' class='jofjofwl'><td></td><td></td><td colspan=100>&nbsp;&nbsp;&nbsp;&nbsp;<span class='jofjofwlshow' "
                                         + (config.showFire ? "style='border-bottom:1px dotted darkorange;'" : "")
                                         + ">&nbsp;&nbsp;&nbsp;&nbsp;... click to show remaining worklog ..."
                                         + "</span></td></tr>")
                                             .click(function (e) {
-                                                $(".jofjofhidden[rel="+issId+"]").removeClass("jofjofhidden");
+                                                $(".jofjofhidden[rel="+data.issId+"]").removeClass("jofjofhidden");
                                                 $(this).addClass("jofjofhidden");
                                             });
                                 
-                                $(".jofjofwl[rel="+issId+"]").eq(config.maxWorkLog-1).after(showRow);
-                                $(".jofjofwl[rel="+issId+"]:gt("+(config.maxWorkLog)+")").addClass("jofjofhidden");
+                                $(".jofjofwl[rel="+data.issId+"]").eq(config.maxWorkLog-1).after(showRow);
+                                $(".jofjofwl[rel="+data.issId+"]:gt("+(config.maxWorkLog)+")").addClass("jofjofhidden");
                             }
                         });
                 });
@@ -108,38 +116,51 @@ $("body#jira").each(function() {
         }
 
         function ComputeReadiness(issId, targetElement) {
-            GetIssue(issId,
-                        function(issue) {
-                            var readiness = Readiness.UNKNOWN;
-                            var isSubTask = issue.fields.issuetype.subtask;
-                            if (issue.fields.status.statusCategory.name == "Done") {
-                                readiness = Readiness.DONE;
-                                AddReadiness(targetElement, readiness);
-                            } else if (!isSubTask || issue.fields.status.statusCategory.name == "In Progress") {
-                                readiness = Readiness.GO;
-                                AddReadiness(targetElement, readiness);
-                            } else {
-                                var parentIssId = issue.fields.parent.id;
-                                GetIssue(parentIssId,
-                                    function(issue) {
-                                        if (issue.fields.status.statusCategory.name == "Done")
-                                        {
-                                            readiness = Readiness.STOP;
-                                        } else {
-                                            var predecessorStatus = "Done";
-                                            issue.fields.subtasks.every(function(st) {
-                                                if (st.id==issId) {
-                                                    readiness = (predecessorStatus=="Done") ? Readiness.GO : Readiness.WAIT;
-                                                    return false;
-                                                }
-                                                predecessorStatus = st.fields.status.statusCategory.name;
-                                                return true;
-                                            });
+            JofJofQueueIssueAction(issId,
+                {
+                    targetElement:targetElement,
+                    uniqueId:uniqueId++,
+                    issId:issId,
+                },
+                function(issue, data) {
+                    console.debug("jofjof : rd callback " + issId + " with "+JSON.stringify(data)+ " targetElement:"+data.targetElement[0].outerHTML); // #DEBUGONLY
+                    var readiness = Readiness.UNKNOWN;
+                    var isSubTask = issue.fields.issuetype.subtask;
+                    if (issue.fields.status.statusCategory.name == "Done") {
+                        readiness = Readiness.DONE;
+                        AddReadiness(data.targetElement, readiness);
+                    } else if (!isSubTask && issue.fields.status.statusCategory.name == "In Progress") {
+                        readiness = Readiness.GO;
+                        AddReadiness(data.targetElement, readiness);
+                    } else {
+                        var parentIssId = issue.fields.parent.id;
+                        JofJofQueueIssueAction(parentIssId,
+                            { 
+                                targetElement:targetElement,
+                                uniqueId:uniqueId++,
+                                issId:issId,
+                                parentIssId:parentIssId
+                            },
+                            function(issue, parentData) {
+                                console.debug("jofjof : rd parent " + parentData.parentIssId + " callback for " + parentData.issId + " with "+JSON.stringify(parentData)+ " targetElement:"+parentData.targetElement[0].outerHTML); // #DEBUGONLY
+                                if (issue.fields.status.statusCategory.name == "Done")
+                                {
+                                    readiness = Readiness.STOP;
+                                } else {
+                                    var predecessorStatus = "Done";
+                                    issue.fields.subtasks.every(function(st) {
+                                        if (st.id==parentData.issId) {
+                                            readiness = (predecessorStatus=="Done") ? Readiness.GO : Readiness.WAIT;
+                                            return false;
                                         }
-                                        AddReadiness(targetElement, readiness);
+                                        predecessorStatus = st.fields.status.statusCategory.name;
+                                        return true;
                                     });
-                            }
-                        });
+                                }
+                                AddReadiness(parentData.targetElement, readiness);
+                            });
+                    }
+                });
         }
 
         if (config.readiness) {
@@ -228,6 +249,7 @@ $("body#jira").each(function() {
                         });
                     }
                 }
+                JofJofProcessQueue();
             }
             doRepeatChecks();
 
