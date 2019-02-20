@@ -3,6 +3,7 @@ function save_options() {
   var comments = document.getElementById('comments').checked;
   var parentSummary = document.getElementById('parentSummary').checked;
   var worklog = document.getElementById('worklog').checked;
+  var timesheet = document.getElementById('timesheet').checked;
   var parentLink = document.getElementById('parentLink').checked;
   var readiness = document.getElementById('readiness').checked;
   var showFire = document.getElementById('showFire').checked;
@@ -11,6 +12,7 @@ function save_options() {
       comments: comments,
       parentSummary: parentSummary,
       worklog: worklog,
+      timesheet: timesheet,
       parentLink: parentLink,
       readiness: readiness,
       showFire: showFire
@@ -33,6 +35,7 @@ function restore_options() {
       comments: true,
       parentSummary: true,
       worklog: true,
+      timesheet: true,
       parentLink: true,
       readiness: true,
       showFire: true
@@ -41,6 +44,7 @@ function restore_options() {
     document.getElementById('comments').checked = items.comments;
     document.getElementById('parentSummary').checked = items.parentSummary;
     document.getElementById('worklog').checked = items.worklog;
+    document.getElementById('timesheet').checked = items.timesheet;
     document.getElementById('parentLink').checked = items.parentLink;
     document.getElementById('readiness').checked = items.readiness;
     document.getElementById('showFire').checked = items.showFire;

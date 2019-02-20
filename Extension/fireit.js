@@ -4,8 +4,9 @@ $("body#jira").each(function() {
     chrome.storage.sync.get({
         comments: true,
         parentSummary: true,
-        worklog: true,
+        worklog: false,
         maxWorkLog : 3,
+        timesheet: true,
         parentLink: true,
         readiness: true,
         showFire:true,
@@ -101,6 +102,101 @@ $("body#jira").each(function() {
             }
         }
 
+        // add timesheet of all worklogs after search results table
+        if (config.timesheet) {
+            var jofts=$(".jofjoftimesheet");
+            if (jofts.length>0) {
+                jofts.remove();
+            }
+            else {
+                var listDiv = $(".list-view:first")
+                JofJofQueueLastAction(
+                    {
+                        targetElement:listDiv
+                    },
+                    function (issues, data)
+                    {
+                        console.debug("jofjof : ts callback with "+JSON.stringify(data)); // #DEBUGONLY
+                        RenderTimesheetAfter(issues, data.targetElement);
+                    });
+            }
+        }
+
+        function RenderTimesheetAfter(issues, targetElement)
+        {
+            var timesheet = {}
+            var worklogs = Object.values(JofJofIssuesCache)
+                .map(function(item,index) {return item.fields.worklog.worklogs })
+                .reduce(function(x,y) { return x.concat(y) })
+                .sort(function(a,b) { return (new Date(b.started)-new Date(a.started)) });
+            for (var worklog in worklogs) {
+                AddWorkLogToTimesheet(timesheet, worklogs[worklog]);
+            }
+            var mainDiv = $("<div></div>").addClass("jofjoftimesheet");
+            if (config.showFire) mainDiv.addClass("jofjofshowfire");
+            var header = $("<h1 class='jofjoftimesheetheader' title='Timesheet'>Timesheet</h1>");
+            mainDiv.append(header);
+            var table = $("<table></table>").addClass("jofjoftstable").addClass("aui");
+            mainDiv.append(table);
+            var tableHead = $("<thead><tr>"
+                          + "<th class='jofjofindentcolumn'>Person</td>"
+                          + "<th class='jofjofindentcolumn'>Day</td>"
+                          + "<th>Key</td>"
+                          + "<th>Summary</td>"
+                          + "<th>Time spent</td>"
+                          + "<th>&nbsp;</td>"
+                          + "</tr></thead>");
+            table.append(tableHead);
+            var tableBody = $("<tbody></tbody>");
+            table.append(tableBody);
+                                  
+            for (var person in timesheet) {
+                var row = $("<tr><td colspan='6' class='jofjoftsperson'><b>"+person+"</b></td></tr>");
+                tableBody.append(row);
+                var personData = timesheet[person];
+                for (var day in personData) {
+                    var row = $("<tr><td>&nbsp;</td><td colspan='5' class='jofjoftsday'><b>"+day+"</b></td></tr>");
+                    tableBody.append(row);
+                    var dayData = personData[day];
+                    for (var item in dayData)
+                    {
+                        var keyContent = $("tr#issuerow"+dayData[item].issueId+" td.issuekey")[0].innerHTML;
+                        var summaryContent = $("tr#issuerow"+dayData[item].issueId+" td.summary")[0].innerHTML;
+                        var row = $("<tr>"
+                                     + "<td class='jofjoftsperson'>&nbsp;</td>"
+                                     + "<td class='jofjoftsday'>&nbsp;</td>"
+                                     + "<td class='issuekey jofjoftskey'>"+keyContent+"</td>"
+                                     + "<td class='summary jofjoftssummary'>"+summaryContent+"</td>"
+                                     + "<td class='jofjoftstimespent'>"+dayData[item].timespent+"</td>"
+                                     + "<td class='jofjoftspad'>&nbsp;</td>"
+                                     + "</tr>");
+                        tableBody.append(row);
+                    }
+                }
+            }
+            targetElement.after(mainDiv);
+        }
+
+        function AddWorkLogToTimesheet(timesheet, worklog)
+        {
+            var person = worklog.author.displayName;
+            var personData = timesheet[person];
+            if (personData == null) {
+                personData = {};
+                timesheet[person] = personData;
+            }
+            var startParts = (new Date(worklog.started)).toDateString().split(" ");
+            var day = startParts[0] + " " + startParts[2] + "-" + startParts[1] + "-" + startParts[3];
+            var timespent = worklog.timeSpent;
+            var issueId = worklog.issueId;
+            var dayData = personData[day];
+            if (dayData == null) {
+                dayData = [];
+                personData[day] = dayData;
+            }
+            dayData.push({issueId:issueId, timespent:timespent});
+        }
+
         var Readiness = {
             UNKNOWN : 0,
             STOP : 1,
@@ -133,10 +229,21 @@ $("body#jira").each(function() {
                         readiness = Readiness.DONE;
                         readinessText = "Done";
                         AddReadiness(data.targetElement, readiness, readinessText);
-                    } else if (!isSubTask && issue.fields.status.statusCategory.name == "In Progress") {
-                        readiness = Readiness.GO;
-                        readinessText = "In Progress";
+                    } else if (issue.fields.status.name.toLowerCase() === 'dev blocked') {
+                        readiness = Readiness.STOP;
+                        readinessText = issue.fields.status.name; 
                         AddReadiness(data.targetElement, readiness, readinessText);
+                    } else if (issue.fields.labels.findIndex(label => label.toLowerCase() === 'blocked') >=0 ) {
+                        readiness = Readiness.STOP;
+                        readinessText = "Labelled blocked"; 
+                        AddReadiness(data.targetElement, readiness, readinessText);
+                    } else if (!isSubTask) {
+                        if (issue.fields.status.statusCategory.name == "In Progress"
+                                || issue.fields.status.statusCategory.name == "To Do") {
+                            readiness = Readiness.GO;
+                            readinessText =  issue.fields.status.statusCategory.name;
+                            AddReadiness(data.targetElement, readiness, readinessText);
+                        }
                     } else {
                         var parentIssId = issue.fields.parent.id;
                         JofJofQueueIssueAction(parentIssId,
@@ -152,6 +259,12 @@ $("body#jira").each(function() {
                                 {
                                     readiness = Readiness.STOP;
                                     readinessText = "Parent is Done";
+                                } else if (issue.fields.status.name.toLowerCase() === 'dev blocked') {
+                                    readiness = Readiness.STOP;
+                                    readinessText = "Parent is " + issue.fields.status.name; 
+                                } else if (issue.fields.labels.findIndex(label => label.toLowerCase() === 'blocked') >= 0) {
+                                    readiness = Readiness.STOP;
+                                    readinessText = "Parent is labelled blocked"; 
                                 } else {
                                     var predecessorStatus = "Done";
                                     issue.fields.subtasks.every(function(st) {

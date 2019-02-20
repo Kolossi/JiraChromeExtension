@@ -64,3 +64,46 @@
     border:1px dotted darkorange;
 }
 
+div.jofjoftimesheet
+{
+    margin-top:50px;
+    padding:25px;
+}
+
+.jofjoftimesheet.jofjofshowfire
+{
+    border:1px dotted darkorange;
+}
+
+td.jofjofindentcolumn
+{
+    width:100px;
+}
+
+.jofjoftstable td
+{
+    padding: 8px 4px;
+}
+
+.jofjoftstable .jofjoftskey a.issue-link
+{
+    font-size:12px;
+    font-weight:600px;
+    line-height: 21px;
+    color:#5e6c84;   
+}
+
+.jofjoftstable .jofjoftssummary a.issue-link
+{
+    font-size: 14px;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 20px;
+    color: #172b4d;
+}
+
+.jofjoftstable .jofjoftssummary a.issue-link.parentIssue
+{
+    color: #666;
+}
+

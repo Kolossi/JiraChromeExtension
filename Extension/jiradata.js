@@ -18,6 +18,12 @@ function JofJofGetIssue(issId, successFn) {
     }
 }
 
+var JOFJOF_LAST_ACTION_MAGIC_VALUE = "Last";
+
+function JofJofQueueLastAction(queueData, action) {
+    JofJofQueueIssueAction(JOFJOF_LAST_ACTION_MAGIC_VALUE, queueData, action);
+}
+
 function JofJofQueueIssueAction(issId, queueData, action) {
     var queueVal = JofJofIssueActionQueue[issId];
     if (queueVal == null) {
@@ -33,18 +39,32 @@ function JofJofProcessQueue()
 {
     console.debug("jofjof: ProcessQueue, pending now for all: "+JSON.stringify(JofJofIssueActionQueue)); // #DEBUGONLY
     for (var queueIssId in JofJofIssueActionQueue) {
+        if (queueIssId==JOFJOF_LAST_ACTION_MAGIC_VALUE) continue;
         console.debug("jofjof: ProcessQueue, getting issId:" + queueIssId); // #DEBUGONLY
         JofJofGetIssue(queueIssId, function(issue) {
             var getIssId = issue.id;
             console.debug("jofjof : Retrieved "+getIssId + "pending now for all: "+JSON.stringify(JofJofIssueActionQueue)); // #DEBUGONLY
             var queueItems = JofJofIssueActionQueue[getIssId];
             console.debug("jofjof : Retrieved "+getIssId+" looping over waiters: "+ JSON.stringify(queueItems)); // #DEBUGONLY
-            for (var i = 0; i< queueItems.length; i++) {
-                var callData = queueItems[i].data;
-                console.debug("jofjof : Processing "+getIssId+", uniqueId:"+callData.uniqueId+" - calling "+queueItems[i].action + " with "+JSON.stringify(callData)+" targetElement:"+callData.targetElement[0].outerHTML); // #DEBUGONLY
-                queueItems[i].action(issue, callData);
+            if (queueItems) {
+                for (var i = 0; i< queueItems.length; i++) {
+                    var callData = queueItems[i].data;
+                    console.debug("jofjof : Processing "+getIssId+", uniqueId:"+callData.uniqueId+" - calling "+queueItems[i].action + " with "+JSON.stringify(callData)+" targetElement:"+callData.targetElement[0].outerHTML); // #DEBUGONLY
+                    queueItems[i].action(issue, callData);
+                }
             }
             delete JofJofIssueActionQueue[getIssId];
+            if (Object.entries(JofJofIssueActionQueue).length==1 && JofJofIssueActionQueue[JOFJOF_LAST_ACTION_MAGIC_VALUE])
+            {
+                var queueItems = JofJofIssueActionQueue[JOFJOF_LAST_ACTION_MAGIC_VALUE];
+                console.debug("jofjof : Retrieved last actions looping over waiters: "+ JSON.stringify(queueItems)); // #DEBUGONLY
+                for (var i = 0; i< queueItems.length; i++) {
+                    var callData = queueItems[i].data;
+                    console.debug("jofjof : Processing last action - calling "+queueItems[i].action + " with "+JSON.stringify(callData)); // #DEBUGONLY
+                    queueItems[i].action(JofJofIssuesCache, callData);
+                    delete JofJofIssueActionQueue[JOFJOF_LAST_ACTION_MAGIC_VALUE];
+                }
+            }
         });
     }
 }
