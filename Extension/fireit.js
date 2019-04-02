@@ -9,6 +9,7 @@ $("body#jira").each(function() {
         timesheet: true,
         parentLink: true,
         readiness: true,
+        progressNums: true,
         showFire:true,
         menu:false
     }, function(config) {
@@ -43,6 +44,63 @@ $("body#jira").each(function() {
                     'border-bottom' : config.showFire ? '1px dotted darkorange' : null
                 });
             });
+        }
+
+        if (config.progressNums) {
+            var jofpn=$(".jofjofpn");
+            if (jofpn.length>0) {
+                jofpn.remove();
+            }
+            else
+            {
+                var progressTables = $("td.progress>table");
+                progressTables.each(function() {
+                    var progressTable = $(this);
+                    if (progressTable == null) return;
+                    if (config.showFire) progressTable.addClass("jofjofshowfire");
+                    var rowPair = $("tr table tr table", progressTable);
+                    if (rowPair == null) return;
+                    var beforeText = GetText(rowPair[0]);
+                    var afterText = GetText(rowPair[1]);
+                    var targetRow = $("tbody>tr:first",progressTable);
+                    targetRow.after("<tr class='jofjofpn'><td colspan='2'>"+afterText+"</td></tr>");
+                    targetRow.before("<tr class='jofjofpn'><td colspan='2'>"+beforeText+"</td></tr>");
+                });
+            }
+        }
+
+        function GetText(parentElem)
+        {
+            if (parentElem == null) return "";
+            var itemArray = [];
+            $.each($("img", parentElem), function (index, item) {
+                var altValue = $(item).attr("alt")
+                if (altValue == null) return;
+                altValue = altValue.trim();
+                if (altValue == "") return;
+                itemArray.push(CleanProgressString(altValue));
+            });
+            return itemArray.join(" / ");
+        }
+
+        function CleanProgressString(str)
+        {
+             var replaceMap = {
+                        "Original Estimate -" : "est:",
+                        "Time Spent -" : "rec:",
+                        "Remaining Estimate -" : "rem:",
+                        " days" : "d",
+                        " day" : "d",
+                        " hours" : "h",
+                        " hour" : "h",
+                        " minutes" : "m",
+                        " minute" : "m",
+                        " " : "&nbsp;"
+                    };
+            for (key in replaceMap) {
+                str = str.replace(new RegExp(key, 'gi'), replaceMap[key]);
+            }
+            return str;
         }
 
         // get worklog and add to search results table
@@ -160,8 +218,22 @@ $("body#jira").each(function() {
                     var dayData = personData[day];
                     for (var item in dayData)
                     {
-                        var keyContent = $("tr#issuerow"+dayData[item].issueId+" td.issuekey")[0].innerHTML;
-                        var summaryContent = $("tr#issuerow"+dayData[item].issueId+" td.summary")[0].innerHTML;
+                        var issue = issues[dayData[item].issueId];
+                        var keyContent;
+                        var summaryContent;
+                        var keyCells = $("tr#issuerow"+issue.id+" td.issuekey");
+                        if (keyCells.length>0) {
+                            keyContent = keyCells[0].innerHTML;
+                        } else {
+                            keyContent = '<a class="issue-link" data-issue-key="'+issue.key+' href="/browse/'+issue.key+'" original-title="">'+issue.key+'</a>'
+                        }
+
+                        var summaryCells = $("tr#issuerow"+issue.id+" td.summary");
+                        if (summaryCells.length>0) {
+                            summaryContent = summaryCells[0].innerHTML;
+                        } else {
+                            summaryContent = '<p><a class="issue-link" data-issue-key="'+issue.key+'" href="/browse/'+issue.key+'" original-title="">'+issue.fields.summary+'</a></p>'
+                        }
                         var row = $("<tr>"
                                      + "<td class='jofjoftsperson'>&nbsp;</td>"
                                      + "<td class='jofjoftsday'>&nbsp;</td>"

@@ -7,6 +7,7 @@ function save_options() {
   var parentLink = document.getElementById('parentLink').checked;
   var readiness = document.getElementById('readiness').checked;
   var showFire = document.getElementById('showFire').checked;
+  var progressNums = document.getElementById('progressNums').checked;
   var menu = document.getElementById('menu').checked; // #DEBUGONLY
   chrome.storage.sync.set({
       comments: comments,
@@ -15,7 +16,8 @@ function save_options() {
       timesheet: timesheet,
       parentLink: parentLink,
       readiness: readiness,
-      showFire: showFire
+      showFire: showFire,
+      progressNums : progressNums
       ,menu: menu // #DEBUGONLY
   }, function() {
     // Update status to let user know options were saved.
@@ -38,7 +40,8 @@ function restore_options() {
       timesheet: true,
       parentLink: true,
       readiness: true,
-      showFire: true
+      showFire: true,
+      progressNums : true
       ,menu:false // #DEBUGONLY
   }, function(items) {
     document.getElementById('comments').checked = items.comments;
@@ -48,6 +51,7 @@ function restore_options() {
     document.getElementById('parentLink').checked = items.parentLink;
     document.getElementById('readiness').checked = items.readiness;
     document.getElementById('showFire').checked = items.showFire;
+    document.getElementById('progressNums').checked = items.progressNums;
     document.getElementById('menu').checked = items.menu; // #DEBUGONLY
   });
 }

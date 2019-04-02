@@ -75,6 +75,17 @@ div.jofjoftimesheet
     border:1px dotted darkorange;
 }
 
+td.progress>table.jofjofshowfire
+{
+    border:1px dotted darkorange;
+}
+
+tr.jofjofpn
+{
+    font-size:12px;
+    color: darkgray
+}
+
 td.jofjofindentcolumn
 {
     width:100px;
